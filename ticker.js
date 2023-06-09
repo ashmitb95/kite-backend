@@ -1,49 +1,36 @@
-//#region Ticker
+var KiteTicker = require('kiteconnect').KiteTicker
+require('dotenv').config()
+const token = require('./token.json')
+var ticker = new KiteTicker({
+    api_key: process?.env?.API_KEY,
+    access_token: token?.access_token,
+})
 
-var KiteTicker = require('kiteconnect').KiteTicker;
-const token = require('./token.json');
-const onTicks = (ticks) => {
-  console.log('Ticking data');
-  broadcastData(ticks);
-};
+// set autoreconnect with 10 maximum reconnections and 5 second interval
+ticker.autoReconnect(true, 10, 5)
+ticker.connect()
+ticker.on('ticks', onTicks)
+ticker.on('connect', subscribe)
 
-const doTickerStuff = () => {
-  try {
-    var ticker = new KiteTicker({
-      api_key: 'vbwnoztv5asscmta',
-      access_token: token?.access_token,
-    });
-    ticker.autoReconnect(true, -1, 5);
-    // ticker.autoReconnect(true, 10, 5);
-    ticker.connect();
-    ticker.on('ticks', onTicks);
-    ticker.on('connect', () => {
-      var items = [738561];
-      ticker.subscribe(items);
-      ticker.setMode(ticker.modeFull, items);
-    });
+ticker.on('noreconnect', function () {
+    console.log('noreconnect')
+})
 
-    // setInterval(onTicks, 2000);
-
-    ticker.on('noreconnect', function () {
-      console.log('noreconnect');
-    });
-
-    ticker.on('reconnecting', function (reconnect_interval, reconnections) {
-      console.log(
+ticker.on('reconnect', function (reconnect_count, reconnect_interval) {
+    console.log(
         'Reconnecting: attempt - ',
-        reconnections,
-        ' innterval - ',
+        reconnect_count,
+        ' interval - ',
         reconnect_interval
-      );
-    });
-  } catch (e) {
-    console.log('Error: ', e);
-  }
-};
+    )
+})
 
-module.exports = {
-  doTickerStuff,
-};
+function onTicks(ticks) {
+    console.log('Ticks', ticks)
+}
 
-//#endregion Ticker
+function subscribe() {
+    var items = [256265]
+    ticker.subscribe(items)
+    ticker.setMode(ticker.modeFull, items)
+}
